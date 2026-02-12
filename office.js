@@ -9,10 +9,10 @@ var agentStatuses = {};
 // AGENTS with Pokémon
 var AGENTS = {
   'Obi': { deskX: 240, deskY: 160, emoji: '🦉', pokeId: 25, pattern: 'main' }, // Pikachu
-  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', pokeId: 150, pattern: 'dev' }, // Mewtwo
-  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', pokeId: 132, pattern: 'subagent' }, // Ditto
-  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', pokeId: 448, pattern: 'group' }, // Lucario
-  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', pokeId: 65, pattern: 'cron' } // Alakazam
+  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', pokeId: 4, pattern: 'dev' }, // Charmander
+  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', pokeId: 7, pattern: 'subagent' }, // Squirtle
+  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', pokeId: 1, pattern: 'group' }, // Bulbasaur
+  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', pokeId: 132, pattern: 'cron' } // Ditto
 };
 
 function initOfficeGame() {
@@ -24,6 +24,9 @@ function initOfficeGame() {
     height: 360,
     pixelArt: true,
     roundPixels: true,
+    render: {
+      antialias: false
+    },
     parent: 'virtual-office-container',
     backgroundColor: '#1a1a2e',
     scene: { 
@@ -133,22 +136,22 @@ function officeCreate() {
     const charGroup = this.add.container(cfg.deskX, cfg.deskY - 12);
     
     // Pokémon sprite
-    const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`).setOrigin(0.5, 0.5).setScale(2.5);
+    const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`).setOrigin(0.5, 0.5).setScale(2);
     // pokeSprite.setPipeline(this.renderer.pipelines['TextureTintPipeline']); // Removed: causes crash in modern Phaser
     
-    charGroup.add([pokeSprite]);
+    charGroup.add(pokeSprite);
     
     // Name label
-    const label = this.add.text(cfg.deskX, cfg.deskY - 40, cfg.emoji + ' ' + name, {
+    const label = this.add.text(0, -52, cfg.emoji + ' ' + name, {
       fontSize: '8px', fontFamily: 'monospace', color: '#ccc'
     }).setOrigin(0.5);
     
     // Status dot
-    const statusDot = this.add.circle(cfg.deskX + 35, cfg.deskY - 38, 5, 0x888888);
+    const statusDot = this.add.circle(35, -26, 5, 0x888888);
     statusDot.setStrokeStyle(1, 0xffffff * 0.5);
     
     // Zzz
-    const zzz = this.add.text(cfg.deskX + 20, cfg.deskY - 28, '', {
+    const zzz = this.add.text(20, -16, '', {
       fontSize: '12px', fontFamily: 'monospace', color: '#8888ff'
     }).setOrigin(0.5);
     
