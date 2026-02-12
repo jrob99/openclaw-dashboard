@@ -1,18 +1,16 @@
-// Virtual Office - Pixel Art Agent Monitor
-// Uses Phaser 3 to render a GameBoy-style office with animated agent characters
+// Virtual Office - Pixel Art Pokemon Wandering Agents
+// Phaser 3 GameBoy-style office with wandering Pokemon NPCs tied to agent activity
 
 var officeGame = null;
 var officeScene = null;
-var agentSprites = {};
-var agentStatuses = {};
 
-// AGENTS with Pokémon
+// AGENTS with updated desk positions on floor
 var AGENTS = {
-  'Obi': { deskX: 240, deskY: 160, emoji: '🦉', pokeId: 25, pattern: 'main' }, // Pikachu
-  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', pokeId: 4, pattern: 'dev' }, // Charmander
-  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', pokeId: 7, pattern: 'subagent' }, // Squirtle
-  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', pokeId: 1, pattern: 'group' }, // Bulbasaur
-  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', pokeId: 132, pattern: 'cron' } // Ditto
+  'Obi': { deskX: 240, deskY: 240, emoji: '🦉', pokeId: 25, pattern: 'main' }, // Pikachu
+  'Devin': { deskX: 100, deskY: 200, emoji: '🛠️', pokeId: 4, pattern: 'dev' }, // Charmander
+  'Dobby': { deskX: 380, deskY: 210, emoji: '🧦', pokeId: 7, pattern: 'subagent' }, // Squirtle
+  'Rev': { deskX: 120, deskY: 280, emoji: '🔍', pokeId: 1, pattern: 'group' }, // Bulbasaur
+  'Scout': { deskX: 400, deskY: 290, emoji: '🔭', pokeId: 132, pattern: 'cron' } // Ditto
 };
 
 function initOfficeGame() {
@@ -24,9 +22,7 @@ function initOfficeGame() {
     height: 360,
     pixelArt: true,
     roundPixels: true,
-    render: {
-      antialias: false
-    },
+    antialias: false,
     parent: 'virtual-office-container',
     backgroundColor: '#1a1a2e',
     scene: { 
@@ -35,25 +31,24 @@ function initOfficeGame() {
       update: officeUpdate 
     },
     scale: { 
-      mode: Phaser.Scale.FIXED
+      mode: Phaser.Scale.NONE 
     }
   };
   
   officeGame = new Phaser.Game(config);
-  // Pixel perfect rendering
+  
+  // Pixel perfect
   setTimeout(() => {
     const canvases = document.querySelectorAll('#virtual-office-container canvas');
     canvases.forEach(canvas => {
       canvas.style.imageRendering = 'pixelated';
       canvas.style.imageRendering = '-moz-crisp-edges';
       canvas.style.imageRendering = 'crisp-edges';
-      canvas.style.imageRendering = 'optimizespeed';
     });
   }, 100);
 }
 
 function officePreload() {
-  // Load Pokémon sprites
   Object.entries(AGENTS).forEach(([name, cfg]) => {
     if (cfg.pokeId) {
       this.load.image(`poke-${name.toLowerCase()}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${cfg.pokeId}.png`);
@@ -64,10 +59,10 @@ function officePreload() {
 function officeCreate() {
   officeScene = this;
   
-  // Floor - dark checkerboard
+  // Floor tiles y > 140
   const tileSize = 32;
   for (let x = 0; x < 480; x += tileSize) {
-    for (let y = 240; y < 360; y += tileSize) {  // floor only bottom
+    for (let y = 140; y < 360; y += tileSize) {
       const dark = ((Math.floor(x / tileSize) + Math.floor(y / tileSize)) % 2 === 0);
       this.add.rectangle(x + tileSize/2, y + tileSize/2, tileSize, tileSize, dark ? 0x1e1e36 : 0x22223a);
     }
@@ -80,13 +75,11 @@ function officeCreate() {
   this.add.rectangle(476, 180, 8, 360, 0x2a2a4a); // right
   
   // Windows
-  this.add.rectangle(100, 40, 80, 60, 0x87CEEB); // left window
-  this.add.rectangle(380, 40, 80, 60, 0x87CEEB); // right window
+  this.add.rectangle(100, 40, 80, 60, 0x87CEEB);
+  this.add.rectangle(380, 40, 80, 60, 0x87CEEB);
   // blinds
   for (let i = 0; i < 7; i++) {
     this.add.rectangle(100 + i*11.5, 42, 8, 56, 0x708090 * 0.5);
-  }
-  for (let i = 0; i < 7; i++) {
     this.add.rectangle(380 + i*11.5, 42, 8, 56, 0x708090 * 0.5);
   }
   
@@ -95,193 +88,254 @@ function officeCreate() {
   this.add.rectangle(240, 70, 28, 2, 0x111);
   this.add.text(240, 71, '🕐', { fontSize: '18px' }).setOrigin(0.5);
   
-  // Whiteboard
-  this.add.rectangle(240, 110, 160, 50, 0x3a3a5a); // frame
-  this.add.rectangle(240, 110, 152, 42, 0xdedede); // board
+  // Mission Board
+  this.add.rectangle(240, 110, 160, 50, 0x3a3a5a);
+  this.add.rectangle(240, 110, 152, 42, 0xdedede);
   this.add.text(240, 104, 'MISSION BOARD', { fontSize: '8px', fontFamily: 'monospace', color: '#333' }).setOrigin(0.5);
-  this.add.text(240, 114, '• Complete Virtual Office', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
-  this.add.text(240, 122, '• Fix login bugs', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
-  this.add.text(240, 130, '• Optimize dashboard', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
+  this.add.text(240, 114, '• Pokemon wandering', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
+  this.add.text(240, 122, '• Collision avoidance', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
+  this.add.text(240, 130, '• Activity status', { fontSize: '7px', fontFamily: 'monospace', color: '#555' }).setOrigin(0.5);
   
-  // Decorations
   // Plants
-  drawPlant(this, 30, 320);
-  drawPlant(this, 450, 320);
-  drawPlant(this, 30, 200);
-  drawPlant(this, 450, 200);
+  drawPlant(this, 40, 190);
+  drawPlant(this, 440, 190);
+  drawPlant(this, 40, 330);
+  drawPlant(this, 440, 330);
   
   // Coffee machine
-  this.add.rectangle(240, 300, 32, 24, 0x4a3728); // body
-  this.add.rectangle(240, 296, 24, 6, 0x666); // top
-  this.add.circle(248, 302, 3, 0xffa500); // light
-  this.add.text(240, 312, '☕', { fontSize: '12px' }).setOrigin(0.5);
+  this.add.rectangle(240, 308, 32, 24, 0x4a3728);
+  this.add.rectangle(240, 304, 24, 6, 0x666);
+  this.add.circle(248, 310, 3, 0xffa500);
+  this.add.text(240, 320, '☕', { fontSize: '12px' }).setOrigin(0.5);
   
-  // Desks & Agents
+  // Obstacles
+  let obstacles = [
+    {x: 240, y: 135, w: 160, h: 50}, // mission board
+    {x: 40, y: 200, w: 20, h: 35}, // plants adjusted centers
+    {x: 440, y: 200, w: 20, h: 35},
+    {x: 40, y: 342, w: 20, h: 35},
+    {x: 440, y: 342, w: 20, h: 35},
+    {x: 240, y: 320, w: 35, h: 25} // coffee
+  ];
+  
+  // Desks & obstacles
   Object.entries(AGENTS).forEach(([name, cfg]) => {
     // Desk
-    this.add.rectangle(cfg.deskX, cfg.deskY + 20, 60, 24, 0x3d2b1f); // top
-    this.add.rectangle(cfg.deskX, cfg.deskY + 26, 60, 12, 0x2d1f14); // front
-    // Legs
-    this.add.rectangle(cfg.deskX - 22, cfg.deskY + 34, 6, 16, 0x2d1f14);
-    this.add.rectangle(cfg.deskX + 22, cfg.deskY + 34, 6, 16, 0x2d1f14);
+    this.add.rectangle(cfg.deskX, cfg.deskY, 60, 24, 0x3d2b1f); // top
+    this.add.rectangle(cfg.deskX, cfg.deskY + 10, 60, 14, 0x2d1f14); // front
+    this.add.rectangle(cfg.deskX - 25, cfg.deskY + 20, 8, 18, 0x2d1f14); // legs
+    this.add.rectangle(cfg.deskX + 25, cfg.deskY + 20, 8, 18, 0x2d1f14);
     
     // Monitor
-    this.add.rectangle(cfg.deskX, cfg.deskY + 8, 22, 16, 0x333); // bezel
-    this.add.rectangle(cfg.deskX, cfg.deskY + 8, 18, 12, 0x4488ff); // glow
+    this.add.rectangle(cfg.deskX, cfg.deskY - 8, 24, 18, 0x333333);
+    this.add.rectangle(cfg.deskX, cfg.deskY - 8, 20, 14, 0x4488ff);
     
     // Keyboard
-    this.add.rectangle(cfg.deskX, cfg.deskY + 30, 40, 4, 0x222);
+    this.add.rectangle(cfg.deskX, cfg.deskY + 4, 42, 5, 0x222222);
     
-    // Character container
-    const charGroup = this.add.container(cfg.deskX, cfg.deskY - 12);
+    // Desk obstacle
+    obstacles.push({x: cfg.deskX, y: cfg.deskY + 25, w: 70, h: 65});
+  });
+  
+  this.obstacles = obstacles;
+  this.walkBounds = {minX: 35, maxX: 445, minY: 155, maxY: 335};
+  
+  // Collision helpers
+  this.isValidPos = function(x, y) {
+    if (x < this.walkBounds.minX || x > this.walkBounds.maxX || 
+        y < this.walkBounds.minY || y > this.walkBounds.maxY) return false;
     
-    // Pokémon sprite
-    const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`).setOrigin(0.5, 0.5).setScale(2);
-    // pokeSprite.setPipeline(this.renderer.pipelines['TextureTintPipeline']); // Removed: causes crash in modern Phaser
+    const hw = 28, hh = 35;
+    const l = x - hw, r = x + hw, t = y - hh, b = y + hh;
+    
+    for (let o of this.obstacles) {
+      const ol = o.x - o.w / 2, oor = o.x + o.w / 2;
+      const ot = o.y - o.h / 2, ob = o.y + o.h / 2;
+      if (r > ol && l < oor && b > ot && t < ob) return false;
+    }
+    return true;
+  };
+  
+  this.pickValidTarget = function(currentX, currentY) {
+    for (let i = 0; i < 30; i++) {
+      let tx = this.walkBounds.minX + Math.random() * (this.walkBounds.maxX - this.walkBounds.minX);
+      let ty = this.walkBounds.minY + Math.random() * (this.walkBounds.maxY - this.walkBounds.minY);
+      if (this.isValidPos(tx, ty)) return {x: tx, y: ty};
+    }
+    // Fallback nearby
+    for (let i = 0; i < 10; i++) {
+      let angle = Math.random() * Math.PI * 2;
+      let dist = 60 + Math.random() * 100;
+      let tx = currentX + Math.cos(angle) * dist;
+      let ty = currentY + Math.sin(angle) * dist;
+      if (this.isValidPos(tx, ty)) return {x: tx, y: ty};
+    }
+    return {x: currentX, y: currentY};
+  };
+  
+  // Agent data
+  this.agentData = {};
+  
+  // State functions
+  this.startIdle = function(data) {
+    if (data.walkTween) {
+      this.tweens.killTweensOf(data.container);
+      data.walkTween = null;
+    }
+    data.state = 'idle';
+    
+    // Bounce tween
+    if (data.idleTween) {
+      this.tweens.killTweensOf(data.container);
+    }
+    data.idleTween = this.tweens.add({
+      targets: data.container,
+      y: data.baseY + 2,
+      duration: 700 + Math.random() * 300,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut'
+    });
+    
+    // Idle duration based on active
+    let idleDur = data.active ? (1000 + Math.random() * 1000) : (4000 + Math.random() * 4000);
+    data.idleEnd = this.time.now + idleDur;
+  };
+  
+  this.startWalk = function(data, tx, ty) {
+    if (data.idleTween) {
+      this.tweens.killTweensOf(data.container);
+      data.idleTween = null;
+    }
+    data.state = 'walking';
+    
+    let dist = Phaser.Math.Distance.Between(data.container.x, data.container.y, tx, ty);
+    let duration = Math.max(800, Math.min(4000, (dist / 50) * 1000));
+    
+    data.walkTween = this.tweens.add({
+      targets: data.container,
+      x: tx,
+      y: ty,
+      duration: duration,
+      ease: 'Linear',
+      onComplete: () => {
+        data.walkTween = null;
+        data.baseY = data.container.y;
+        this.startIdle(data);
+      }
+    });
+    
+    // Flip sprite
+    data.sprite.flipX = tx < data.container.x;
+  };
+  
+  // Create agents
+  Object.entries(AGENTS).forEach(([name, cfg]) => {
+    const charGroup = this.add.container(cfg.deskX, cfg.deskY + 45);
+    
+    const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`)
+      .setOrigin(0.5, 0.5)
+      .setScale(1.2)
+      .setTint(0xffffff);
+    
+    const sh = pokeSprite.displayHeight / 2;
+    const sw = pokeSprite.displayWidth / 2;
+    
+    const label = this.add.text(0, -sh - 12, cfg.emoji + ' ' + name, {
+      fontSize: '9px',
+      fontFamily: 'monospace',
+      color: '#eee'
+    }).setOrigin(0.5, 0.5);
+    
+    const statusDot = this.add.circle(sw + 18, -sh + 8, 4, 0x6b7280)
+      .setStrokeStyle(1, 0xffffff, 0.3);
+    
+    const zzz = this.add.text(0, sh + 8, '', {
+      fontSize: '12px',
+      color: '#8888ff'
+    }).setOrigin(0.5, 0.5);
     
     charGroup.add(pokeSprite);
+    charGroup.add(label);
+    charGroup.add(statusDot);
+    charGroup.add(zzz);
     
-    // Name label
-    const label = this.add.text(0, -52, cfg.emoji + ' ' + name, {
-      fontSize: '8px', fontFamily: 'monospace', color: '#ccc'
-    }).setOrigin(0.5);
-    
-    // Status dot
-    const statusDot = this.add.circle(35, -26, 5, 0x888888);
-    statusDot.setStrokeStyle(1, 0xffffff * 0.5);
-    
-    // Zzz
-    const zzz = this.add.text(20, -16, '', {
-      fontSize: '12px', fontFamily: 'monospace', color: '#8888ff'
-    }).setOrigin(0.5);
-    
-    agentSprites[name] = { 
-      container: charGroup, 
-      label, 
-      statusDot, 
-      zzz, 
-      currentStatus: 'sleeping' 
+    this.agentData[name] = {
+      container: charGroup,
+      sprite: pokeSprite,
+      label,
+      statusDot,
+      zzz,
+      state: 'idle',
+      idleEnd: 0,
+      walkTween: null,
+      idleTween: null,
+      active: false,
+      baseY: charGroup.y
     };
   });
   
-  // Update loop
-  this.time.addEvent({ 
-    delay: 5000, 
-    callback: updateOfficeVisuals, 
-    callbackScope: this, 
-    loop: true 
+  // Initial positions and start idle
+  Object.values(this.agentData).forEach(data => {
+    let pos = this.pickValidTarget(data.container.x, data.container.y);
+    data.container.x = pos.x;
+    data.container.y = pos.y;
+    data.baseY = pos.y;
+    this.startIdle(data);
   });
   
-  updateOfficeVisuals.call(this); // initial
+  // Poll event every 10s
+  this.pollEvent = this.time.addEvent({
+    delay: 10000,
+    callback: () => {
+      fetch('/api/sessions')
+        .then(r => r.json())
+        .then(sessions => {
+          const now = Date.now();
+          Object.entries(this.agentData).forEach(([name, data]) => {
+            const cfg = AGENTS[name];
+            const recent = sessions.filter(s => 
+              s.key && s.key.includes(cfg.pattern) && 
+              now - parseInt(s.lastMessage || 0) < 60000
+            );
+            const active = recent.length > 0;
+            data.active = active;
+            data.statusDot.setFillStyle(active ? 0x10b981 : 0x6b7280);
+            data.sprite.tint = active ? 0xffffff : 0x888888;
+          });
+        })
+        .catch(() => {});
+    },
+    loop: true
+  });
+  
+  // Initial poll
+  this.pollEvent.callback.call(this);
 }
 
 function drawPlant(scene, x, y) {
-  // Pot
-  scene.add.rectangle(x, y + 8, 10, 12, 0x8B4513);
-  // Leaves
+  scene.add.rectangle(x, y + 8, 10, 12, 0x8B4513); // pot
   scene.add.circle(x, y - 2, 10, 0x228B22);
   scene.add.circle(x - 6, y - 6, 6, 0x2ecc40);
   scene.add.circle(x + 6, y - 4, 7, 0x27ae60);
 }
 
-function updateOfficeVisuals() {
-  if (!officeScene || !window.agentStatuses) return;
-  
-  Object.entries(agentSprites).forEach(([name, sprite]) => {
-    const agentStatus = agentStatuses[name];
-    const status = agentStatus ? agentStatus.status : 'sleeping';
-    
-    const deskY = AGENTS[name].deskY;
-    
-    // Update status dot
-    const dotColors = { 
-      working: 0x10b981, 
-      idle: 0xf59e0b, 
-      sleeping: 0x6b7280 
-    };
-    sprite.statusDot.setFillStyle(dotColors[status] || 0x6b7280);
-    
-    // If status changed, kill tweens
-    if (sprite.currentStatus !== status) {
-      officeScene.tweens.killTweensOf(sprite.container);
-      officeScene.tweens.killTweensOf(sprite.zzz);
-      sprite.currentStatus = status;
-    }
-    
-    // Apply visuals and restart tween
-    if (status === 'working') {
-      sprite.container.setRotation(0);
-      sprite.container.y = deskY - 8;
-      officeScene.tweens.killTweensOf(sprite.container);
-      officeScene.tweens.add({
-        targets: sprite.container,
-        y: deskY - 10,
-        duration: 180,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-    } else if (status === 'idle') {
-      sprite.container.setRotation(0);
-      sprite.container.y = deskY - 8;
-      officeScene.tweens.killTweensOf(sprite.container);
-      officeScene.tweens.add({
-        targets: sprite.container,
-        y: deskY - 6,
-        duration: 1600,
-        yoyo: true,
-        repeat: -1,
-        ease: 'Sine.easeInOut'
-      });
-    } else { // sleeping
-      sprite.container.y = deskY - 2;
-      sprite.container.setRotation(0.15);
-      sprite.zzz.setText('z Z z');
-      officeScene.tweens.killTweensOf(sprite.zzz);
-      officeScene.tweens.add({
-        targets: sprite.zzz,
-        y: deskY - 42,
-        alpha: 0,
-        duration: 2200,
-        repeat: -1,
-        onRepeat: function() {
-          this.targets[0].y = deskY - 28;
-          this.targets[0].alpha = 1;
-        }
-      });
+function officeUpdate(time, delta) {
+  Object.values(officeScene.agentData).forEach(data => {
+    if (data.state === 'idle' && time > data.idleEnd) {
+      const target = officeScene.pickValidTarget(data.container.x, data.container.y);
+      officeScene.startWalk(data, target.x, target.y);
     }
   });
 }
 
-function officeUpdate() {
-  // Per frame if needed
-}
-
-// Self-contained module - hook into nav and poll sessions
+// DOM init
 document.addEventListener('DOMContentLoaded', function() {
-  // Find nav items and add office page handling
-  document.querySelectorAll('.nav-item').forEach(function(item) {
+  document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', function() {
       if (item.dataset.page === 'office') {
         if (!officeGame) initOfficeGame();
       }
     });
   });
-  
-  // Poll sessions for status updates
-  setInterval(function() {
-    fetch('/api/sessions').then(r => r.json()).then(function(sessions) {
-      var now = Date.now();
-      Object.keys(AGENTS).forEach(function(name) {
-        var cfg = AGENTS[name];
-        var active = sessions.filter(function(s) { return s.key && s.key.includes(cfg.pattern); });
-        var working = active.filter(function(s) { return now - s.updatedAt < 120000; });
-        var idle = active.filter(function(s) { return now - s.updatedAt >= 120000 && now - s.updatedAt < 1800000; });
-        var status = 'sleeping';
-        if (working.length > 0) status = 'working';
-        else if (idle.length > 0) status = 'idle';
-        agentStatuses[name] = { status: status, config: cfg, lastMessage: (active[0] && active[0].lastMessage) || '' };
-      });
-    }).catch(function() {});
-  }, 5000);
 });
