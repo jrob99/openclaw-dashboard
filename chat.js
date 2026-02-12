@@ -12,7 +12,7 @@
     
     container.innerHTML = '<div style="max-width:800px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 140px);">' +
       '<h2 style="color:#e4e4e7;margin-bottom:16px;font-size:20px;">💬 Chat with Obi</h2>' +
-      '<div id="chat-messages" style="flex:1;overflow-y:auto;background:#13131a;border:1px solid #2a2a3a;border-radius:12px;padding:16px;margin-bottom:12px;"></div>' +
+      '<div id="chat-messages" style="flex:1;overflow-y:auto;background:#13131a;border:1px solid #2a2a3a;border-radius:12px;padding:16px 16px 48px;margin-bottom:12px;"></div>' +
       '<div style="display:flex;gap:8px;">' +
         '<input id="chat-input" type="text" placeholder="Type a message..." ' +
           'style="flex:1;background:#1f1f2e;border:1px solid #2a2a3a;border-radius:8px;padding:12px 16px;color:#e4e4e7;font-size:14px;outline:none;font-family:inherit;" />' +
