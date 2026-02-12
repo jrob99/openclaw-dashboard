@@ -23,6 +23,7 @@ function initOfficeGame() {
     width: 480,
     height: 360,
     pixelArt: true,
+    roundPixels: true,
     parent: 'virtual-office-container',
     backgroundColor: '#1a1a2e',
     scene: { 
@@ -31,12 +32,21 @@ function initOfficeGame() {
       update: officeUpdate 
     },
     scale: { 
-      mode: Phaser.Scale.FIT, 
-      autoCenter: Phaser.Scale.CENTER_BOTH 
+      mode: Phaser.Scale.FIXED
     }
   };
   
   officeGame = new Phaser.Game(config);
+  // Pixel perfect rendering
+  setTimeout(() => {
+    const canvases = document.querySelectorAll('#virtual-office-container canvas');
+    canvases.forEach(canvas => {
+      canvas.style.imageRendering = 'pixelated';
+      canvas.style.imageRendering = '-moz-crisp-edges';
+      canvas.style.imageRendering = 'crisp-edges';
+      canvas.style.imageRendering = 'optimizespeed';
+    });
+  }, 100);
 }
 
 function officePreload() {
