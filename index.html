@@ -1164,6 +1164,8 @@ body {
   }
 }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
+<script src="office.js"></script>
 </head>
 <body>
 
@@ -1201,6 +1203,10 @@ body {
       <div class="nav-item" data-page="feed">
         <span class="icon">⚡</span>
         <span class="nav-text">Live Feed</span>
+      </div>
+      <div class="nav-item" data-page="office">
+        <span class="icon">🏢</span>
+        <span class="nav-text">Office</span>
       </div>
     </nav>
   </aside>
@@ -1841,7 +1847,31 @@ let sortDir = 'desc';
 let selectedSessions = new Set();
 let notificationsEnabled = false;
 
-document.querySelectorAll('.nav-item').forEach(item => {
+let officeGame = null;
+let agentStatuses = {};
+
+const AGENTS = {
+  'Obi': { pattern: 'agent:main:main', emoji: '🦉', deskX: 240, deskY: 160, colorBody: 0x8B4513, colorHead: 0xDAA520 },
+  'Devin': { pattern: 'agent:dev:', emoji: '🛠️', deskX: 80, deskY: 100, colorBody: 0x4682B4, colorHead: 0xA9A9A9 },
+  'Dobby': { pattern: 'agent:dev2:', emoji: '🧦', deskX: 400, deskY: 100, colorBody: 0x228B22, colorHead: 0xD2B48C },
+  'Rev': { pattern: 'agent:review:', emoji: '🔍', deskX: 80, deskY: 220, colorBody: 0x8B0000, colorHead: 0xDC143C },
+  'Scout': { pattern: 'agent:scout:', emoji: '🔭', deskX: 400, deskY: 220, colorBody: 0x20B2AA, colorHead: 0x9370DB }
+};
+
+function updateAgentStatuses() {
+  const now = Date.now();
+  agentStatuses = {};
+  Object.keys(AGENTS).forEach(name => {
+    const config = AGENTS[name];
+    const allSessions = sessions.filter(s => s.key.includes(config.pattern));
+    const workingSessions = allSessions.filter(s => now - s.updatedAt < 120000);
+    const idleSessions = allSessions.filter(s => now - s.updatedAt < 1800000 && now - s.updatedAt >= 120000);
+    let status = 'sleeping';
+    if (workingSessions.length > 0) status = 'working';
+    else if (idleSessions.length > 0) status = 'idle';
+    agentStatuses[name] = { status, config, lastMessage: allSessions[0]?.lastMessage || '' };
+  });
+}\n\ndocument.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     const page = item.dataset.page;
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -1856,7 +1886,12 @@ document.querySelectorAll('.nav-item').forEach(item => {
       liveEventSource = null;
     }
     
-    if (page === 'memory') {
+    if (page === 'office') {
+      updateAgentStatuses();
+      if (!officeGame) {
+        initOfficeGame();
+      }
+    } else if (page === 'memory') {
       fetchMemoryFiles();
     }
   });
@@ -1880,6 +1915,7 @@ async function fetchData() {
     ]);
     
     sessions = await sessRes.json();
+    updateAgentStatuses();
     costs = await costsRes.json();
     systemStats = await sysRes.json();
     
@@ -3789,5 +3825,9 @@ setTimeout(() => {
   updatePageTitle();
 }, 2000);
 </script>
+
+<div id="page-office" class="page" style="display:none;">
+  <div id="virtual-office-container" style="display:flex;justify-content:center;align-items:center;padding:20px;min-height:400px;background:var(--bg-tertiary);border-radius:16px;"></div>
+</div>
 </body>
 </html>

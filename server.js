@@ -1274,6 +1274,18 @@ const server = http.createServer((req, res) => {
     
     return;
   }
+  if (req.url === '/office.js') {
+    try {
+      const js = fs.readFileSync(path.join(__dirname, 'office.js'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'application/javascript' });
+      res.end(js);
+    } catch (e) {
+      res.writeHead(404);
+      res.end('Not found');
+    }
+    return;
+  }
+
   try {
     const html = fs.readFileSync(htmlPath, 'utf8');
     res.writeHead(200, { 'Content-Type': 'text/html' });
