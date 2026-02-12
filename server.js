@@ -1077,7 +1077,59 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  if (req.url === '/api/tailscale') {
+  if (req.url === '/api/chat/send' && req.method === 'POST') {
+  let body = '';
+  req.on('data', c => body += c);
+  req.on('end', () => {
+    try {
+      const { message } = JSON.parse(body);
+      if (!message) { res.writeHead(400); res.end('No message'); return; }
+      
+      // Read gateway auth from config
+      const configPath = path.join(OPENCLAW_DIR, 'openclaw.json');
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      const gwPort = (config.gateway && config.gateway.port) || 18789;
+      const gwPassword = (config.gateway && config.gateway.auth && config.gateway.auth.password) || '';
+      
+      const postData = JSON.stringify({
+        tool: 'sessions_send',
+        input: { message: message, sessionKey: 'agent:main:main' }
+      });
+      
+      const gwReq = require('http').request({
+        hostname: '127.0.0.1',
+        port: gwPort,
+        path: '/tools/invoke',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + gwPassword,
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        timeout: 30000
+      }, (gwRes) => {
+        let data = '';
+        gwRes.on('data', c => data += c);
+        gwRes.on('end', () => {
+          res.writeHead(gwRes.statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+          res.end(data);
+        });
+      });
+      gwReq.on('error', (e) => {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Gateway error: ' + e.message }));
+      });
+      gwReq.write(postData);
+      gwReq.end();
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+  });
+  return;
+}
+
+if (req.url === '/api/tailscale') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
     try {
       const { execSync } = require('child_process');
@@ -1274,7 +1326,19 @@ const server = http.createServer((req, res) => {
     
     return;
   }
-  if (req.url === '/office.js') {
+  if (req.url === '/chat.js') {
+  try {
+    const js = fs.readFileSync(path.join(__dirname, 'chat.js'), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(js);
+  } catch (e) {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+  return;
+}
+
+if (req.url === '/office.js') {
     try {
       const js = fs.readFileSync(path.join(__dirname, 'office.js'), 'utf8');
       res.writeHead(200, { 'Content-Type': 'application/javascript' });

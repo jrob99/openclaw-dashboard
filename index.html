@@ -1166,6 +1166,7 @@ body {
 </style>
 <script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"></script>
 <script src="office.js"></script>
+<script src="chat.js"></script>
 </head>
 <body>
 
@@ -1203,6 +1204,10 @@ body {
       <div class="nav-item" data-page="feed">
         <span class="icon">⚡</span>
         <span class="nav-text">Live Feed</span>
+      </div>
+      <div class="nav-item" data-page="chat">
+        <span class="icon">💬</span>
+        <span class="nav-text">Chat</span>
       </div>
       <div class="nav-item" data-page="office">
         <span class="icon">🏢</span>
@@ -1775,6 +1780,9 @@ body {
       </div>
     </div>
 
+    <div id="chat" class="page" style="display:none">
+      <div id="chat-container"></div>
+    </div>
     <div id="office" class="page" style="display:none">
       <div id="virtual-office-container" style="display:flex;justify-content:center;align-items:center;padding:20px;min-height:400px;background:#0a0a0f;border-radius:12px;"></div>
     </div>
