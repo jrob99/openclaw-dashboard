@@ -1,7 +1,6 @@
 // Chat UI - Self-contained module
 (function() {
   var chatInitialized = false;
-  var chatMessages = [];
   var chatPolling = null;
 
   function initChat() {
@@ -11,16 +10,15 @@
     var container = document.getElementById('chat-container');
     if (!container) return;
     
-    container.innerHTML = 
-      '&lt;div style="max-width:800px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 140px);"&gt;' +
-        '&lt;h2 style="color:#e4e4e7;margin-bottom:16px;font-size:20px;"&gt;💬 Chat with Obi&lt;/h2&gt;' +
-        '&lt;div id="chat-messages" style="flex:1;overflow-y:auto;background:#13131a;border:1px solid #2a2a3a;border-radius:12px;padding:16px;margin-bottom:12px;"&gt;&lt;/div&gt;' +
-        '&lt;div style="display:flex;gap:8px;"&gt;' +
-          '&lt;input id="chat-input" type="text" placeholder="Type a message..." ' +
-            'style="flex:1;background:#1f1f2e;border:1px solid #2a2a3a;border-radius:8px;padding:12px 16px;color:#e4e4e7;font-size:14px;outline:none;font-family:inherit;" /&gt;' +
-          '&lt;button id="chat-send" style="background:#6366f1;color:white;border:none;border-radius:8px;padding:12px 24px;cursor:pointer;font-weight:600;font-size:14px;"&gt;Send&lt;/button&gt;' +
-        '&lt;/div&gt;' +
-      '&lt;/div&gt;';
+    container.innerHTML = '<div style="max-width:800px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 140px);">' +
+      '<h2 style="color:#e4e4e7;margin-bottom:16px;font-size:20px;">💬 Chat with Obi</h2>' +
+      '<div id="chat-messages" style="flex:1;overflow-y:auto;background:#13131a;border:1px solid #2a2a3a;border-radius:12px;padding:16px;margin-bottom:12px;"></div>' +
+      '<div style="display:flex;gap:8px;">' +
+        '<input id="chat-input" type="text" placeholder="Type a message..." ' +
+          'style="flex:1;background:#1f1f2e;border:1px solid #2a2a3a;border-radius:8px;padding:12px 16px;color:#e4e4e7;font-size:14px;outline:none;font-family:inherit;" />' +
+        '<button id="chat-send" style="background:#6366f1;color:white;border:none;border-radius:8px;padding:12px 24px;cursor:pointer;font-weight:600;font-size:14px;">Send</button>' +
+      '</div>' +
+    '</div>';
     
     var input = document.getElementById('chat-input');
     var sendBtn = document.getElementById('chat-send');
@@ -67,10 +65,10 @@
         div.style.cssText += 'background:#2a1a1a;color:#ef4444;text-align:center;margin:0 auto;font-size:12px;';
       }
       var time = timestamp ? new Date(timestamp).toLocaleTimeString() : '';
-      div.innerHTML = '&lt;div style="font-size:11px;color:#71717a;margin-bottom:4px;"&gt;' + 
+      div.innerHTML = '<div style="font-size:11px;color:#71717a;margin-bottom:4px;">' + 
         (role === 'user' ? '👤 You' : role === 'assistant' ? '🦉 Obi' : '⚠️ System') + 
-        (time ? ' · ' + time : '') + '&lt;/div&gt;' + 
-        content.replace(/&lt;/g, '&amp;lt;').replace(/\n/g, '&lt;br&gt;');
+        (time ? ' · ' + time : '') + '</div>' + 
+        content.replace(/</g, '&lt;').replace(/\n/g, '<br>');
       messagesDiv.appendChild(div);
       messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }

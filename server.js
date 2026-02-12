@@ -1077,7 +1077,51 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
-  if (req.url === '/api/chat/send' && req.method === 'POST') {
+  if (req.url === '/api/tasks') {
+  res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+  try {
+    var tasks = [];
+    var stateData = {};
+    var backlogPath = path.join(WORKSPACE_DIR, 'memory', 'dev-team', 'backlog.md');
+    var statePath = path.join(WORKSPACE_DIR, 'memory', 'dev-team', 'state.json');
+    
+    try { stateData = JSON.parse(fs.readFileSync(statePath, 'utf8')); } catch(e) {}
+    
+    try {
+      var md = fs.readFileSync(backlogPath, 'utf8');
+      var taskRegex = /### \[([^\]]+)\]\s+(.+)\n[\s\S]*?-\s*\*\*Priority:\*\*\s*(\S+)\n[\s\S]*?-\s*\*\*Status:\*\*\s*(\S+)/g;
+      var match;
+      while ((match = taskRegex.exec(md)) !== null) {
+        tasks.push({
+          id: match[1],
+          title: match[2].trim(),
+          priority: match[3],
+          status: match[4],
+          done: (stateData.completedTasks || []).includes(match[1])
+        });
+      }
+    } catch(e) {}
+    
+    // Add completed tasks from state
+    (stateData.completedTasks || []).forEach(function(id) {
+      if (!tasks.find(function(t) { return t.id === id; })) {
+        tasks.push({ id: id, title: id, priority: 'P1', status: 'done', done: true });
+      }
+    });
+    
+    res.end(JSON.stringify({
+      tasks: tasks,
+      currentTask: stateData.currentTask || null,
+      stats: stateData.stats || {},
+      projectStatus: stateData.projectStatus || {}
+    }));
+  } catch(e) {
+    res.end(JSON.stringify({ tasks: [], currentTask: null, stats: {}, projectStatus: {} }));
+  }
+  return;
+}
+
+if (req.url === '/api/chat/send' && req.method === 'POST') {
   let body = '';
   req.on('data', c => body += c);
   req.on('end', () => {
@@ -1326,7 +1370,19 @@ if (req.url === '/api/tailscale') {
     
     return;
   }
-  if (req.url === '/chat.js') {
+  if (req.url === '/kanban.js') {
+  try {
+    const js = fs.readFileSync(path.join(__dirname, 'kanban.js'), 'utf8');
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(js);
+  } catch (e) {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+  return;
+}
+
+if (req.url === '/chat.js') {
   try {
     const js = fs.readFileSync(path.join(__dirname, 'chat.js'), 'utf8');
     res.writeHead(200, { 'Content-Type': 'application/javascript' });
