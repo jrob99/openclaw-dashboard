@@ -1,17 +1,18 @@
 // Virtual Office - Pixel Art Agent Monitor
 // Uses Phaser 3 to render a GameBoy-style office with animated agent characters
 
-let officeGame;
-let officeScene = null;
-let agentSprites = {};
+var officeGame = null;
+var officeScene = null;
+var agentSprites = {};
+var agentStatuses = {};
 
-// AGENTS already defined in index.html, but fallback
-const AGENTS = window.AGENTS || {
-  'Obi': { deskX: 240, deskY: 160, emoji: '🦉', colorBody: 0x8B4513, colorHead: 0xDAA520 },
-  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', deskX: 80, deskY: 100, colorBody: 0x4682B4, colorHead: 0xA9A9A9 },
-  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', colorBody: 0x228B22, colorHead: 0xD2B48C },
-  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', colorBody: 0x8B0000, colorHead: 0xDC143C },
-  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', colorBody: 0x20B2AA, colorHead: 0x9370DB }
+// AGENTS
+var AGENTS = {
+  'Obi': { deskX: 240, deskY: 160, emoji: '🦉', colorBody: 0x8B4513, colorHead: 0xDAA520, pattern: 'main' },
+  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', colorBody: 0x4682B4, colorHead: 0xA9A9A9, pattern: 'dev' },
+  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', colorBody: 0x228B22, colorHead: 0xD2B48C, pattern: 'subagent' },
+  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', colorBody: 0x8B0000, colorHead: 0xDC143C, pattern: 'group' },
+  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', colorBody: 0x20B2AA, colorHead: 0x9370DB, pattern: 'cron' }
 };
 
 function initOfficeGame() {
@@ -182,7 +183,7 @@ function updateOfficeVisuals() {
   if (!officeScene || !window.agentStatuses) return;
   
   Object.entries(agentSprites).forEach(([name, sprite]) => {
-    const agentStatus = window.agentStatuses[name];
+    const agentStatus = agentStatuses[name];
     const status = agentStatus ? agentStatus.status : 'sleeping';
     
     const deskY = AGENTS[name].deskY;
@@ -250,3 +251,32 @@ function updateOfficeVisuals() {
 function officeUpdate() {
   // Per frame if needed
 }
+
+// Self-contained module - hook into nav and poll sessions
+document.addEventListener('DOMContentLoaded', function() {
+  // Find nav items and add office page handling
+  document.querySelectorAll('.nav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+      if (item.dataset.page === 'office') {
+        if (!officeGame) initOfficeGame();
+      }
+    });
+  });
+  
+  // Poll sessions for status updates
+  setInterval(function() {
+    fetch('/api/sessions').then(r => r.json()).then(function(sessions) {
+      var now = Date.now();
+      Object.keys(AGENTS).forEach(function(name) {
+        var cfg = AGENTS[name];
+        var active = sessions.filter(function(s) { return s.key && s.key.includes(cfg.pattern); });
+        var working = active.filter(function(s) { return now - s.updatedAt < 120000; });
+        var idle = active.filter(function(s) { return now - s.updatedAt >= 120000 && now - s.updatedAt < 1800000; });
+        var status = 'sleeping';
+        if (working.length > 0) status = 'working';
+        else if (idle.length > 0) status = 'idle';
+        agentStatuses[name] = { status: status, config: cfg, lastMessage: (active[0] && active[0].lastMessage) || '' };
+      });
+    }).catch(function() {});
+  }, 5000);
+});
