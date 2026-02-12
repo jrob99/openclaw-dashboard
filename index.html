@@ -1871,7 +1871,9 @@ function updateAgentStatuses() {
     else if (idleSessions.length > 0) status = 'idle';
     agentStatuses[name] = { status, config, lastMessage: allSessions[0]?.lastMessage || '' };
   });
-}\n\ndocument.querySelectorAll('.nav-item').forEach(item => {
+}
+  
+  document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     const page = item.dataset.page;
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
