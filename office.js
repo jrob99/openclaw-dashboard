@@ -6,13 +6,13 @@ var officeScene = null;
 var agentSprites = {};
 var agentStatuses = {};
 
-// AGENTS
+// AGENTS with Pokémon
 var AGENTS = {
-  'Obi': { deskX: 240, deskY: 160, emoji: '🦉', colorBody: 0x8B4513, colorHead: 0xDAA520, pattern: 'main' },
-  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', colorBody: 0x4682B4, colorHead: 0xA9A9A9, pattern: 'dev' },
-  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', colorBody: 0x228B22, colorHead: 0xD2B48C, pattern: 'subagent' },
-  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', colorBody: 0x8B0000, colorHead: 0xDC143C, pattern: 'group' },
-  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', colorBody: 0x20B2AA, colorHead: 0x9370DB, pattern: 'cron' }
+  'Obi': { deskX: 240, deskY: 160, emoji: '🦉', pokeId: 25, pattern: 'main' }, // Pikachu
+  'Devin': { deskX: 80, deskY: 100, emoji: '🛠️', pokeId: 150, pattern: 'dev' }, // Mewtwo
+  'Dobby': { deskX: 400, deskY: 100, emoji: '🧦', pokeId: 132, pattern: 'subagent' }, // Ditto
+  'Rev': { deskX: 80, deskY: 220, emoji: '🔍', pokeId: 448, pattern: 'group' }, // Lucario
+  'Scout': { deskX: 400, deskY: 220, emoji: '🔭', pokeId: 65, pattern: 'cron' } // Alakazam
 };
 
 function initOfficeGame() {
@@ -50,7 +50,12 @@ function initOfficeGame() {
 }
 
 function officePreload() {
-  // No assets, all procedural
+  // Load Pokémon sprites
+  Object.entries(AGENTS).forEach(([name, cfg]) => {
+    if (cfg.pokeId) {
+      this.load.image(`poke-${name.toLowerCase()}`, `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${cfg.pokeId}.png`);
+    }
+  });
 }
 
 function officeCreate() {
@@ -125,26 +130,13 @@ function officeCreate() {
     this.add.rectangle(cfg.deskX, cfg.deskY + 30, 40, 4, 0x222);
     
     // Character container
-    const charGroup = this.add.container(cfg.deskX, cfg.deskY - 8);
+    const charGroup = this.add.container(cfg.deskX, cfg.deskY - 12);
     
-    // Body
-    const body = this.add.rectangle(0, 2, 14, 16, cfg.colorBody);
-    body.setStrokeStyle(1, 0x000000 * 0.3);
+    // Pokémon sprite
+    const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`).setOrigin(0.5, 0.5).setScale(2.5);
+    pokeSprite.setPipeline(this.renderer.pipelines['TextureTintPipeline']); // Pixel perfect tint if needed
     
-    // Head
-    const head = this.add.circle(0, -10, 8, cfg.colorHead);
-    head.setStrokeStyle(1, 0x000000 * 0.3);
-    
-    // Eyes
-    const eyeL = this.add.circle(-3.5, -11, 1.8, 0xffffff);
-    const eyeR = this.add.circle(3.5, -11, 1.8, 0xffffff);
-    const pupilL = this.add.circle(-3.5, -11, 1, 0x000000);
-    const pupilR = this.add.circle(3.5, -11, 1, 0x000000);
-    
-    // Mouth
-    this.add.arc(0, -6, 3.5, 0, Math.PI, false, 0x333333, 1);
-    
-    charGroup.add([body, head, eyeL, eyeR, pupilL, pupilR]);
+    charGroup.add([pokeSprite]);
     
     // Name label
     const label = this.add.text(cfg.deskX, cfg.deskY - 40, cfg.emoji + ' ' + name, {
