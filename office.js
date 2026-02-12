@@ -134,7 +134,7 @@ function officeCreate() {
     
     // Pokémon sprite
     const pokeSprite = this.add.image(0, 0, `poke-${name.toLowerCase()}`).setOrigin(0.5, 0.5).setScale(2.5);
-    pokeSprite.setPipeline(this.renderer.pipelines['TextureTintPipeline']); // Pixel perfect tint if needed
+    // pokeSprite.setPipeline(this.renderer.pipelines['TextureTintPipeline']); // Removed: causes crash in modern Phaser
     
     charGroup.add([pokeSprite]);
     

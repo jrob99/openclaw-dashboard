@@ -1135,9 +1135,26 @@ if (req.url === '/api/chat/send' && req.method === 'POST') {
       const gwPort = (config.gateway && config.gateway.port) || 18789;
       const gwPassword = (config.gateway && config.gateway.auth && config.gateway.auth.password) || '';
       
+// Lookup main session ID
+      const sFile = path.join(sessDir, 'sessions.json');
+      let sessionId = null;
+      try {
+        const data = JSON.parse(fs.readFileSync(sFile, 'utf8'));
+        const mainSession = data['agent:main:main'];
+        if (mainSession && mainSession.sessionId) {
+          sessionId = mainSession.sessionId;
+        }
+      } catch (e) {
+        console.error('Chat send sessions.json:', e.message);
+      }
+      if (!sessionId) {
+        res.writeHead(400, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+        res.end(JSON.stringify({ error: 'Main agent session not found' }));
+        return;
+      }
       const postData = JSON.stringify({
         tool: 'sessions_send',
-        input: { message: message, sessionKey: 'agent:main:main' }
+        args: { message: message, sessionKey: 'agent:main:main' }
       });
       
       const gwReq = require('http').request({
